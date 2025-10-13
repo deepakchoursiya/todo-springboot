@@ -34,8 +34,7 @@ A web-based CRUD application for task management, built on Spring Boot. This pro
 1.  **Clone the repository:**
 
     ```bash
-    git clone [https://github.com/lacys0/Boot_TodoApp.git](https://github.com/lacys0/Boot_TodoApp.git)
-    cd Boot_TodoApp
+    git clone https://github.com/deepakchoursiya/todo-springboot.git
     ```
 
 2.  **Build the project:**
