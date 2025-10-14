@@ -10,10 +10,16 @@ pipeline {
 
   stages {
     stage('Checkout SCM') {
-      steps {
-        git branch: 'main', url: 'https://github.com/your-org/todo-springboot.git'
-      }
-    }
+  steps {
+    checkout([$class: 'GitSCM',
+      branches: [[name: '*/main']],
+      userRemoteConfigs: [[
+        url: 'https://github.com/deepakchoursiya/todo-springboot.git',
+        credentialsId: '76855306-858f-4443-9e52-b03d66f5d931'
+      ]]
+    ])
+  }
+}
 
     stage('Build Application') {
       steps {
