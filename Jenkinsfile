@@ -63,6 +63,14 @@ pipeline {
         }
       }
     }
+    stage('Smoke Test'){
+      steps{
+        sh ''' 
+                    ENDPOINT=$(kubectl get svc todoapp-svc -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")  
+                    curl -I http://$ENDPOINT/ 
+                '''  
+      }
+    }
   }
 
   post {
