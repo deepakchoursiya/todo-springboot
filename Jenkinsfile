@@ -46,7 +46,7 @@ pipeline {
       steps {
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
           sh """
-            aws s3 cp target/todo-spring.jar s3://${S3_BUCKET}/artifacts/todo-spring-${IMAGE_TAG}.jar
+            aws s3 cp target/todoapp-0.0.1-SNAPSHOT.jar s3://${S3_BUCKET}/artifacts/todo-spring-${IMAGE_TAG}.jar
           """
         }
       }
