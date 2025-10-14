@@ -34,14 +34,19 @@ pipeline {
       }
     }
 
-    stage('Push to ECR') {
-      steps {
-        sh """
-          docker push ${ECR_REPO}:${IMAGE_TAG}
-          docker push ${ECR_REPO}:latest
-        """
-      }
-    }
+    stage('Deploy to EKS') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crede-id']]) {
+                    sh '''
+                    aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
+                    kubectl apply -f k8s/deployment.yml
+                    kubectl apply -f k8s/service.yml
+
+                    '''
+                }
+            }
+        }
+ 
 
     stage('Upload Artifact to S3') {
       steps {
