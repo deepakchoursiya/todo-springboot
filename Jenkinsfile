@@ -6,7 +6,6 @@ pipeline {
     ECR_REPO = '684160548236.dkr.ecr.us-east-1.amazonaws.com/todo-ecr'
     IMAGE_TAG = "${env.BUILD_ID}"
     S3_BUCKET = 'todo-cicd'
-   // KUBE_CONFIG = credentials('eks-kubeconfig') // Jenkins credential ID
   }
 
   stages {
@@ -22,45 +21,38 @@ pipeline {
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Build Docker Image & Push to ECR') {
       steps {
-        script {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
           sh """
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${ECR_REPO}
             docker build -t ${ECR_REPO}:${IMAGE_TAG} .
             docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_REPO}:latest
+            docker push ${ECR_REPO}:${IMAGE_TAG}
+            docker push ${ECR_REPO}:latest
+          """
+        }
+      }
+    }
+
+    stage('Upload Artifact to S3') {
+      steps {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
+          sh """
+            aws s3 cp target/todo-spring.jar s3://${S3_BUCKET}/artifacts/todo-spring-${IMAGE_TAG}.jar
           """
         }
       }
     }
 
     stage('Deploy to EKS') {
-            steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-crede-id']]) {
-                    sh '''
-                    aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
-                    kubectl apply -f k8s/deployment.yml
-                    kubectl apply -f k8s/service.yml
-
-                    '''
-                }
-            }
-        }
- 
-
-    stage('Upload Artifact to S3') {
       steps {
-        sh """
-          aws s3 cp target/todo-spring.jar s3://${S3_BUCKET}/artifacts/todo-spring-${IMAGE_TAG}.jar
-        """
-      }
-    }
-
-    stage('Deploy to EKS') {
-      steps {
-        withCredentials([file(credentialsId: 'eks-kubeconfig', variable: 'KUBECONFIG')]) {
+        withCredentials([
+          [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id'],
+          file(credentialsId: 'eks-kubeconfig', variable: 'KUBECONFIG')
+        ]) {
           sh """
-            aws eks update-kubeconfig --name todo-eks --region us-east-1
+            aws eks update-kubeconfig --name todo-eks --region $AWS_REGION
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
           """
