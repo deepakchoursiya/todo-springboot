@@ -55,21 +55,21 @@ pipeline {
     stage('Deploy to EKS') {
       steps {
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
-          sh """
+          sh '''
             aws eks update-kubeconfig --name todo-eks --region $AWS_REGION
             kubectl apply -f k8s/deployment.yaml
             kubectl apply -f k8s/service.yaml
-          """
+          '''
         }
       }
     }
     stage('Smoke Test'){
       steps{
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
-          sh """
-            ENDPOINT=$(kubectl get svc todoapp-svc -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")  
-                    curl -I http://$ENDPOINT/
-          """
+          sh '''
+            ENDPOINT=$(kubectl get svc todo-spring-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")  
+            curl -I http://$ENDPOINT/
+          '''
         }
       }
     }
