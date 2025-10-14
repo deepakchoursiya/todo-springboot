@@ -54,10 +54,7 @@ pipeline {
 
     stage('Deploy to EKS') {
       steps {
-        withCredentials([
-          [$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id'],
-          file(credentialsId: 'eks-kubeconfig', variable: 'KUBECONFIG')
-        ]) {
+        withCredentials([$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']) {
           sh """
             aws eks update-kubeconfig --name todo-eks --region $AWS_REGION
             kubectl apply -f k8s/deployment.yaml
