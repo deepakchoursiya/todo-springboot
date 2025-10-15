@@ -3,9 +3,9 @@ pipeline {
 
   environment {
     AWS_REGION = 'us-east-1'
-    ECR_REPO = '684160548236.dkr.ecr.us-east-1.amazonaws.com/todo-ecr'
+    ECR_REPO = '67398113745.dkr.ecr.us-east-1.amazonaws.com/todo-ecr'
     IMAGE_TAG = "${env.BUILD_ID}"
-    S3_BUCKET = 'todo-cicd'
+    S3_BUCKET = 'todo-s3-bkt'
   }
 
   stages {
@@ -15,7 +15,7 @@ pipeline {
       branches: [[name: '*/main']],
       userRemoteConfigs: [[
         url: 'https://github.com/deepakchoursiya/todo-springboot.git',
-        credentialsId: '76855306-858f-4443-9e52-b03d66f5d931'
+        credentialsId: 'git'
       ]]
     ])
   }
@@ -30,7 +30,7 @@ pipeline {
 
     stage('Build Docker Image & Push to ECR') {
       steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']]) {
           sh """
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${ECR_REPO}
             docker build -t ${ECR_REPO}:${IMAGE_TAG} .
@@ -44,7 +44,7 @@ pipeline {
 
     stage('Upload Artifact to S3') {
       steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']]) {
           sh """
             aws s3 cp target/todoapp-0.0.1-SNAPSHOT.jar s3://${S3_BUCKET}/artifacts/todo-spring-${IMAGE_TAG}.jar
           """
@@ -54,7 +54,7 @@ pipeline {
 
     stage('Deploy to EKS') {
       steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']]) {
           sh '''
             aws eks update-kubeconfig --name todo-eks --region $AWS_REGION
             kubectl apply -f k8s/deployment.yaml
@@ -65,7 +65,7 @@ pipeline {
     }
     stage('Smoke Test'){
       steps{
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred-id']]) {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-cred']]) {
           sh '''
             ENDPOINT=$(kubectl get svc todo-spring-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")  
             curl -I http://$ENDPOINT/
