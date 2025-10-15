@@ -3,7 +3,7 @@ pipeline {
 
   environment {
     AWS_REGION = 'us-east-1'
-    ECR_REPO = '67398113745.dkr.ecr.us-east-1.amazonaws.com/todo-ecr'
+    ECR_REPO = '767398113745.dkr.ecr.us-east-1.amazonaws.com/todo-ecr'
     IMAGE_TAG = "${env.BUILD_ID}"
     S3_BUCKET = 'todo-s3-bkt'
   }
